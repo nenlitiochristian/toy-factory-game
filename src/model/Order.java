@@ -1,8 +1,8 @@
-package main;
+package model;
 
-import main.Game.RandomNumber;
+import utils.RandomNumber;
 
-class Order {
+public class Order {
 	private final Toy orderedToy;
 	private final int level;
 	private int countdown;

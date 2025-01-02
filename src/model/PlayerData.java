@@ -1,13 +1,16 @@
-package main;
+package model;
 
-import main.Game.RandomNumber;
+import game.ToyList;
+import game.WorkerList;
+import utils.RandomNumber;
 
-class PlayerData {
+public class PlayerData {
 	private final String username;
 	private int money;
 	private int difficulty;
 	private int ordersDone;
 	private int currentExperience;
+	private boolean isFinished;
 
 	private Order currentOrder;
 	private ToyList myToys;
@@ -24,14 +27,14 @@ class PlayerData {
 		currentOrder = new Order(myWorkers.getTotalWorkers(), difficulty);
 	}
 
-	// use this only when loading an existing player
 	public PlayerData(String username, int money, int difficulty, int ordersDone, int currentExperience,
-			WorkerList myWorkers, ToyList myToys, Order currentOrder) {
+			boolean isFinished, WorkerList myWorkers, ToyList myToys, Order currentOrder) {
 		this.username = username;
 		this.money = money;
 		this.difficulty = difficulty;
 		this.ordersDone = ordersDone;
 		this.currentExperience = currentExperience;
+		this.isFinished = isFinished;
 
 		this.myWorkers = myWorkers;
 		this.myToys = myToys;
@@ -63,9 +66,9 @@ class PlayerData {
 		int earnedMoney = myToys.getToy(currentType).sellToy(amountSold);
 		currentOrder = new Order(myWorkers.getTotalWorkers(), difficulty);
 		ordersDone++;
-		currentExperience++;
-		checkLevelUp();
-		money += earnedMoney;
+
+		earnExperience(1);
+		earnMoney(earnedMoney);
 		return earnedMoney;
 	}
 
@@ -76,35 +79,13 @@ class PlayerData {
 				+ (int) (0.5 * calculateLevelUpTarget(x - 1));
 	}
 
-	public void checkLevelUp() {
-		if (currentExperience >= calculateLevelUpTarget(difficulty)) {
-			currentExperience -= calculateLevelUpTarget(difficulty);
-			difficulty++;
-		}
-	}
-
-	public boolean tryUpgradingWorker(WorkerLevel workerLevel) {
-		if (workerLevel == WorkerLevel.FIVE)
+	public boolean tryUpgradingWorker(int workerLevel) {
+		if (workerLevel == WorkerList.MAX_WORKER_LEVEL)
 			return false;
 		if (money < myWorkers.getUpgradePrice(workerLevel))
 			return false;
 		spendMoney(myWorkers.getUpgradePrice(workerLevel));
-		switch (workerLevel) {
-		case ONE:
-			myWorkers.upgradeWorkers(WorkerLevel.ONE);
-			break;
-		case TWO:
-			myWorkers.upgradeWorkers(WorkerLevel.TWO);
-			break;
-		case THREE:
-			myWorkers.upgradeWorkers(WorkerLevel.THREE);
-			break;
-		case FOUR:
-			myWorkers.upgradeWorkers(WorkerLevel.FOUR);
-			break;
-		default:
-			break;
-		}
+		myWorkers.upgradeWorkers(workerLevel);
 		return true;
 	}
 
@@ -146,6 +127,17 @@ class PlayerData {
 		return this;
 	}
 
+	public PlayerData earnExperience(int amount) {
+		currentExperience += amount;
+
+		while (currentExperience >= calculateLevelUpTarget(difficulty)) {
+			currentExperience -= calculateLevelUpTarget(difficulty);
+			difficulty++;
+		}
+
+		return this;
+	}
+
 	public PlayerData earnMoney(int amount) {
 		money += amount;
 		return this;
@@ -154,5 +146,17 @@ class PlayerData {
 	public PlayerData spendMoney(int amount) {
 		money -= amount;
 		return this;
+	}
+
+	public Order getOrder() {
+		return currentOrder;
+	}
+
+	public boolean isFinished() {
+		return isFinished;
+	}
+
+	public void setFinished(boolean isFinished) {
+		this.isFinished = isFinished;
 	}
 }

@@ -1,34 +1,11 @@
-package main;
+package model;
 
-class Toy {
+public class Toy {
 	private final ToyType toyType;
-	private final int toyPrice;
 	private int toyAmount = 0;
 
 	public Toy(ToyType toyType, int toyAmount) {
 		this.toyType = toyType;
-		switch (toyType) {
-		case TEDDY_BEAR:
-			toyPrice = 2;
-			break;
-		case TOY_CAR:
-			toyPrice = 5;
-			break;
-		case TOY_PLANE:
-			toyPrice = 7;
-			break;
-		case RC_CAR:
-			toyPrice = 15;
-			break;
-		case TRAIN_SET:
-			toyPrice = 25;
-			break;
-		case TRANSFORM_ROBOT:
-			toyPrice = 55;
-			break;
-		default:
-			throw new IllegalArgumentException("Invalid toy type");
-		}
 		this.addToy(toyAmount);
 	}
 
@@ -55,7 +32,7 @@ class Toy {
 	}
 
 	public int getToyPrice() {
-		return toyPrice;
+		return toyType.getPrice();
 	}
 
 	public int getToyAmount() {
@@ -73,7 +50,7 @@ class Toy {
 		if (toyAmount < 0)
 			throw new IllegalArgumentException("Amount can not be negative");
 		this.toyAmount -= toyAmount;
-		return toyAmount * toyPrice;
+		return toyAmount * toyType.getPrice();
 	}
 
 }

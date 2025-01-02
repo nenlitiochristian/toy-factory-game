@@ -1,5 +1,0 @@
-package main;
-
-enum ToyType {
-	TEDDY_BEAR, TOY_CAR, TOY_PLANE, RC_CAR, TRAIN_SET, TRANSFORM_ROBOT;
-}
