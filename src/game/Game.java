@@ -1,11 +1,13 @@
 package game;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import model.Order;
 import model.PlayerData;
 import model.Toy;
 import model.ToyType;
@@ -14,11 +16,13 @@ import utils.Repository;
 
 public class Game {
 	private Repository repository = new PlayerDataRepository();
+	private List<PlayerData> previousDatas = new ArrayList<>();
 
 	public Game() {
 		Scanner scan = new Scanner(System.in);
 		boolean gameOver = false;
 		while (!gameOver) {
+			previousDatas.clear();
 			clearScreen();
 			System.out.println("Toy Factory Manager");
 			System.out.println("1. New Game");
@@ -83,9 +87,10 @@ public class Game {
 			showPlayerData(playerData, "Order", "Player");
 			System.out.println("1. Show Toy List");
 			System.out.println("2. Produce Toys");
-			System.out.println("3. Manage Workers");
-			System.out.println("4. Exit Game (Your progress is always saved automatically)");
-			System.out.println("5. End Game");
+			System.out.println("3. Undo previous action");
+			System.out.println("4. Manage Workers");
+			System.out.println("5. Exit Game (Your progress is always saved automatically)");
+			System.out.println("6. End Game");
 			System.out.print(">> ");
 
 			try {
@@ -102,13 +107,15 @@ public class Game {
 				produceToys(playerData);
 				break;
 			case 3:
-				manageWorkers(playerData, scan);
+				playerData = undoLastAction();
 				break;
 			case 4:
+				manageWorkers(playerData, scan);
+				break;
+			case 5:
 				continueGame = false;
 				break;
-
-			case 5:
+			case 6:
 				clearScreen();
 				String yesOrNo = "";
 				boolean keepLooping = true;
@@ -138,6 +145,13 @@ public class Game {
 		} while (continueGame);
 	}
 
+	private PlayerData undoLastAction() {
+		if (previousDatas.isEmpty()) {
+			System.out.println("Can't undo further!");
+		}
+		return previousDatas.remove(previousDatas.size() - 1);
+	}
+
 	private void showToyList(PlayerData playerData) {
 		clearScreen();
 		showPlayerData(playerData, "Order", "ToyList");
@@ -149,7 +163,31 @@ public class Game {
 		}
 	}
 
+	public static PlayerData copyPlayerData(PlayerData playerData) {
+		WorkerList originalWorkers = playerData.getMyWorkers();
+		WorkerList copiedWorkers = new WorkerList(originalWorkers.getWorker(1), originalWorkers.getWorker(2),
+				originalWorkers.getWorker(3), originalWorkers.getWorker(4), originalWorkers.getWorker(5));
+
+		ToyList originalToys = playerData.getMyToys();
+		ToyList copiedToys = new ToyList();
+		for (ToyType toyType : ToyType.values()) {
+			copiedToys.addToy(toyType, originalToys.getToy(toyType).getToyAmount());
+		}
+
+		Order originalOrder = playerData.getCurrentOrderData();
+		Order copiedOrder = null;
+		if (originalOrder != null) {
+			Toy copiedToy = new Toy(originalOrder.getToy().getToyType(), originalOrder.getToy().getToyAmount());
+			copiedOrder = new Order(copiedToy, originalOrder.getLevel(), originalOrder.getCountdown());
+		}
+
+		return new PlayerData(playerData.getUsername(), playerData.getMoney(), playerData.getDifficulty(),
+				playerData.getOrdersDone(), playerData.getCurrentExperience(), playerData.isFinished(), copiedWorkers,
+				copiedToys, copiedOrder);
+	}
+
 	private void produceToys(PlayerData playerData) {
+
 		int workhours = playerData.decideWorkhours();
 		for (String progressBar = "#"; progressBar.length() < "##########".length(); progressBar += "#") {
 			clearScreen();
@@ -235,6 +273,7 @@ public class Game {
 		if (playerData.getMoney() >= 500) {
 			System.out.println("Bought a level 1 worker for 500 gold");
 			playerData.buyWorker();
+			previousDatas.add(copyPlayerData(playerData));
 		} else {
 			System.out.println("Not enough money");
 		}
@@ -298,6 +337,7 @@ public class Game {
 		} else if (playerData.tryUpgradingWorker(workerLevel)) {
 			System.out.println("Upgraded a level " + (workerLevel) + " worker for "
 					+ playerData.getWorkerList().getUpgradePrice(workerLevel) + " gold");
+			previousDatas.add(copyPlayerData(playerData));
 		} else {
 			System.out.println("Not enough money");
 		}
