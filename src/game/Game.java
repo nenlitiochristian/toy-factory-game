@@ -18,49 +18,8 @@ public class Game {
 	private Repository repository = new PlayerDataRepository();
 	private List<PlayerData> previousDatas = new ArrayList<>();
 
-	public Game() {
-		Scanner scan = new Scanner(System.in);
-		boolean gameOver = false;
-		while (!gameOver) {
-			previousDatas.clear();
-			clearScreen();
-			System.out.println("Toy Factory Manager");
-			System.out.println("1. New Game");
-			System.out.println("2. Load Game");
-			System.out.println("3. Highscore");
-			System.out.println("4. Exit");
-			System.out.print(">> ");
-
-			int userChoice = -1;
-			try {
-				userChoice = Integer.parseInt(scan.next());
-			} catch (NumberFormatException e) {
-				continue;
-			}
-
-			PlayerData currentPlayer = null;
-			switch (userChoice) {
-			case 1:
-				currentPlayer = makeNewPlayer(scan);
-				if (currentPlayer == null)
-					break;
-				startGame(scan, currentPlayer);
-				break;
-			case 2:
-				currentPlayer = loadExistingPlayer(scan);
-				if (currentPlayer == null)
-					break;
-				startGame(scan, currentPlayer);
-				break;
-			case 3:
-				showLeaderboard(scan);
-				break;
-			case 4:
-				gameOver = true;
-				break;
-			}
-		}
-		scan.close();
+	public Game(Scanner scan, PlayerData playerData) {
+		startGame(scan, playerData);
 	}
 
 	public void startGame(Scanner scan, PlayerData playerData) {
@@ -200,6 +159,9 @@ public class Game {
 				e.printStackTrace();
 			}
 		}
+		// simpan dulu sebelum bikn toys dan finish order
+		PlayerData copy = copyPlayerData(playerData);
+		previousDatas.add(copy);
 
 		clearScreen();
 		showPlayerData(playerData, "Order");
@@ -355,29 +317,6 @@ public class Game {
 		repository.savePlayerData(playerData);
 	}
 
-	public PlayerData makeNewPlayer(Scanner scan) {
-		clearScreen();
-		System.out.println("Toy Factory Manager");
-		while (true) {
-			System.out.print("Input player's name [0 to go back]: ");
-
-			String userInput = scan.next();
-			if (userInput.charAt(0) == '0' && userInput.length() == 1) {
-				return null;
-			} else if (userInput.length() < 3 || userInput.length() > 20) {
-				System.out.println("Name must be between 3 to 20 characters");
-				continue;
-			} else if (playerNameAlreadyExists(userInput)) {
-				System.out.println("User with that name already exists!");
-				continue;
-			}
-
-			PlayerData newPlayer = new PlayerData(userInput);
-			repository.savePlayerData(newPlayer);
-			return newPlayer;
-		}
-	}
-
 	public PlayerData loadExistingPlayer(Scanner scan) {
 		clearScreen();
 		System.out.println("Toy Factory Manager");
@@ -464,10 +403,6 @@ public class Game {
 
 			}
 		}
-	}
-
-	public boolean playerNameAlreadyExists(String username) {
-		return repository.getAllPlayerData().stream().anyMatch(data -> data.getUsername().equals(username));
 	}
 
 	public void showLeaderboard(Scanner scan) {
